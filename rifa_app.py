@@ -1,7 +1,18 @@
 import streamlit as st
 import psycopg2
-import os
 from supabase import create_client
+import os
+
+# # Expande a largura da página
+# st.markdown("""
+#     <style>
+#         .main {
+#             max-width: 100%;
+#             padding-left: 3rem;
+#             padding-right: 3rem;
+#         }
+#     </style>
+# """, unsafe_allow_html=True)
 
 # ======== CONEXÃO COM BANCO POSTGRES (SUPABASE) ========
 def conectar():
@@ -13,12 +24,12 @@ def conectar():
         port="5432"
     )
 
-# ======== CONEXÃO COM STORAGE SUPABASE ========
+# ======== CONEXÃO COM STORAGE SUPABASE (PRIVADO) ========
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# ======== BANCO: CRIAR TABELA SE NÃO EXISTIR ========
+# ======== INICIALIZAÇÃO DO BANCO ========
 def inicializar_banco():
     conn = conectar()
     cursor = conn.cursor()
@@ -35,7 +46,6 @@ def inicializar_banco():
     conn.commit()
     conn.close()
 
-# ======== BANCO: CONSULTAR NÚMEROS RESERVADOS ========
 def numeros_reservados():
     conn = conectar()
     cursor = conn.cursor()
@@ -44,7 +54,6 @@ def numeros_reservados():
     conn.close()
     return reservados
 
-# ======== BANCO: SALVAR NOVA RESERVA ========
 def reservar_numero(numero, nome, contato, comprovante_path):
     conn = conectar()
     cursor = conn.cursor()
@@ -53,13 +62,46 @@ def reservar_numero(numero, nome, contato, comprovante_path):
     conn.commit()
     conn.close()
 
-# ======== INÍCIO DO APP STREAMLIT ========
+# ======== APP STREAMLIT ========
 inicializar_banco()
 
 if "limite_numeros" not in st.session_state:
     st.session_state["limite_numeros"] = 100
 
 st.title("🎟️ Rifa Solidária - Prêmio R$200")
+
+
+
+# ======== CABEÇALHO COM FOTO E MOTIVO ========
+from PIL import Image
+
+# ======== CABEÇALHO COM FOTO, TEXTO E QR CODE ========
+st.markdown("---")
+col1, col2, col3 = st.columns([1, 3, 1])
+
+with col1:
+    foto = Image.open("minha_foto.jpg")  # substitua pelo nome real da sua imagem
+    st.image(foto, width=140, caption="Eduardo")
+
+with col2:
+    st.markdown("""
+        <div style='font-size:18px; line-height:1.6'>
+        Olá! Meu nome é <b>Eduardo</b>, sou doutorando em Engenharia de Produção na UFPE.<br>
+        Estou organizando essa rifa porque estou <b>sem bolsa de estudo</b> no momento.<br>
+        O valor arrecadado vai me ajudar com despesas acadêmicas e de subsistência.<br><br>
+        🎁 O prêmio é <b>R$200</b> e cada número custa <b>R$10</b>.<br>
+        🙏 Participe e me ajude a continuar meus estudos!\n
+        💸 Chave Pix: eduardo.es@ufpe.br
+        </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    qr = Image.open("qrbanco.png")  # nome da imagem do QR Code Pix
+    st.image(qr, width=140, caption="Chave Pix")
+
+
+######################
+
 st.markdown("Escolha um número disponível e preencha seus dados para participar.")
 st.markdown("🔢 Começamos com 100 números, mas você pode carregar mais se quiser!")
 
@@ -74,8 +116,14 @@ for i in range(1, st.session_state["limite_numeros"] + 1):
         if col.button(f"{i}", key=f"botao_{i}"):
             st.session_state["numero_selecionado"] = i
 
+if "mostrar_mais" not in st.session_state:
+    st.session_state["mostrar_mais"] = False
+
 if st.button("🔁 Ver mais números"):
     st.session_state["limite_numeros"] += 50
+    st.session_state["mostrar_mais"] = True
+    st.rerun()
+
 
 # ======== FORMULÁRIO DE RESERVA ========
 if "numero_selecionado" in st.session_state:
@@ -96,16 +144,18 @@ if "numero_selecionado" in st.session_state:
         else:
             caminho = ""
             if comprovante:
-                nome_arquivo = f"{numero_selecionado}_{comprovante.name}"
+                nome_arquivo = f"{numero_selecionado}_{comprovante.name}".replace("\\", "/")
                 conteudo = comprovante.getvalue()
 
-                # Upload para bucket privado
-                supabase.storage.from_("comprovantes").upload(
-                    path=nome_arquivo,
-                    file=conteudo,
-                    file_options={"content-type": comprovante.type}
-                )
-                caminho = nome_arquivo
+                try:
+                    supabase.storage.from_("comprovantes").upload(
+                        path=nome_arquivo,
+                        file=conteudo,
+                        file_options={"content-type": comprovante.type}
+                    )
+                    caminho = nome_arquivo
+                except Exception as e:
+                    st.warning("⚠️ Erro ao enviar o comprovante. Ele será ignorado.")
 
             reservar_numero(numero_selecionado, nome.strip(), contato.strip(), caminho)
             st.success(f"Número {numero_selecionado} reservado com sucesso! ✅")
@@ -113,8 +163,27 @@ if "numero_selecionado" in st.session_state:
             del st.session_state["numero_selecionado"]
             st.rerun()
 
-# ======== VISUALIZAÇÃO DE RESERVAS (OPCIONAL) ========
-if st.checkbox("📋 Ver reservas registradas"):
+# ======== ÁREA ADMINISTRATIVA COM BOTÃO DE LOGIN ========
+st.markdown("## 👨‍💼 Acesso do administrador")
+
+if "admin_autenticado" not in st.session_state:
+    st.session_state["admin_autenticado"] = False
+
+if not st.session_state["admin_autenticado"]:
+    if st.button("🔐 Entrar como administrador"):
+        st.session_state["mostrar_senha"] = True
+
+    if st.session_state.get("mostrar_senha"):
+        senha = st.text_input("Digite a senha", type="password")
+        if senha == st.secrets["ADMIN_PASSWORD"]:  # troque pela sua senha real
+            st.success("Login realizado com sucesso! ✅")
+            st.session_state["admin_autenticado"] = True
+            st.rerun()
+        elif senha:
+            st.error("Senha incorreta.")
+else:
+    st.success("✅ Você está logado como administrador.")
+
     conn = conectar()
     cursor = conn.cursor()
     cursor.execute("SELECT numero, nome, contato, comprovante, data_reserva FROM rifa ORDER BY numero")
@@ -124,6 +193,10 @@ if st.checkbox("📋 Ver reservas registradas"):
     for numero, nome, contato, arquivo, data in reservas:
         st.markdown(f"🔢 **{numero}** | {nome} ({contato}) – {data.strftime('%d/%m/%Y %H:%M')}")
         if arquivo:
-            signed_url = supabase.storage.from_("comprovantes").create_signed_url(arquivo, 60)
-            st.markdown(f"[📎 Ver comprovante (válido por 1 min)]({signed_url['signedURL']})")
+            st.code(f"📁 Arquivo salvo: {arquivo}")
+            try:
+                signed_url = supabase.storage.from_("comprovantes").create_signed_url(arquivo, 60)
+                st.markdown(f"[📎 Ver comprovante (válido por 1 min)]({signed_url['signedURL']})")
+            except:
+                st.warning("⚠️ Link do comprovante não pôde ser gerado.")
         st.markdown("---")
