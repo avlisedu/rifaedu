@@ -95,18 +95,11 @@ st.markdown("🔢 Começamos com 100 números, mas você pode carregar mais se q
 
 reservados = numeros_reservados()
 
-# Detecta a largura da tela
-result = streamlit_js_eval(js_expressions="window.innerWidth", key="SCR")
-
-# Ajusta o número de colunas conforme a largura
-if result and result < 600:
-    num_colunas = 3  # celular
-elif result and result < 900:
-    num_colunas = 5  # tablet
-else:
-    num_colunas = 10  # computador
+dispositivo = streamlit_js_eval(js_expressions="window.innerWidth", key="WIDTH")
+num_colunas = 10 if dispositivo and dispositivo > 768 else 3  # Responsivo
 
 colunas = st.columns(num_colunas)
+
 for i in range(1, st.session_state["limite_numeros"] + 1):
     col = colunas[(i - 1) % num_colunas]
     if i in reservados:
@@ -114,7 +107,6 @@ for i in range(1, st.session_state["limite_numeros"] + 1):
     else:
         if col.button(f"{i}", key=f"botao_{i}"):
             st.session_state["numero_selecionado"] = i
-
 
 if "mostrar_mais" not in st.session_state:
     st.session_state["mostrar_mais"] = False
