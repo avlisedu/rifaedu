@@ -4,6 +4,7 @@ from supabase import create_client
 import os
 from PIL import Image
 
+#Teste
 # ======== CONEXÃO COM BANCO POSTGRES (SUPABASE) ========
 def conectar():
     return psycopg2.connect(
