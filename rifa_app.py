@@ -1,5 +1,6 @@
 import streamlit as st
 import psycopg2
+from supabase import create_client, Client
 import os
 from PIL import Image
 
