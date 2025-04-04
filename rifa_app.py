@@ -4,7 +4,12 @@ from supabase import create_client, Client
 import os
 from PIL import Image
 
-#Teste
+st.set_page_config(
+    page_title="Rifa Solidária do Eduardo",  # <- aqui você muda o nome da aba
+    page_icon="🎟️",  # <- opcional: ícone da aba
+    layout="wide"     # <- já deixa mais espaçoso também
+)
+
 # ======== CONEXÃO COM BANCO POSTGRES (SUPABASE) ========
 def conectar():
     return psycopg2.connect(
