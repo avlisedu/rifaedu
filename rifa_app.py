@@ -1,5 +1,6 @@
 import streamlit as st
 import psycopg2
+from streamlit_js_eval import streamlit_js_eval
 from supabase import create_client, Client
 import os
 from PIL import Image
@@ -94,10 +95,18 @@ st.markdown("🔢 Começamos com 100 números, mas você pode carregar mais se q
 
 reservados = numeros_reservados()
 
-# Ajusta número de colunas com base na largura da tela (móvel ou desktop)
-num_colunas = 5 
-colunas = st.columns(num_colunas)
+# Detecta a largura da tela
+result = streamlit_js_eval(js_expressions="window.innerWidth", key="SCR")
 
+# Ajusta o número de colunas conforme a largura
+if result and result < 600:
+    num_colunas = 3  # celular
+elif result and result < 900:
+    num_colunas = 5  # tablet
+else:
+    num_colunas = 10  # computador
+
+colunas = st.columns(num_colunas)
 for i in range(1, st.session_state["limite_numeros"] + 1):
     col = colunas[(i - 1) % num_colunas]
     if i in reservados:
