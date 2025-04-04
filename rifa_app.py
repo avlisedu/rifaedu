@@ -8,13 +8,12 @@ from PIL import Image
 # ======== CONEXÃO COM BANCO POSTGRES (SUPABASE) ========
 def conectar():
     return psycopg2.connect(
-        host=st.secrets["DB_HOST"],
-        database=st.secrets["DB_NAME"],
-        user=st.secrets["DB_USER"],
+        host="aws-0-sa-east-1.pooler.supabase.com",
+        database="postgres",
+        user="postgres.xkwusqpqmtjfehabofiv",  # observe que o usuário é completo
         password=st.secrets["DB_PASSWORD"],
         port="5432"
     )
-
 # ======== CONEXÃO COM STORAGE SUPABASE (PRIVADO) ========
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
