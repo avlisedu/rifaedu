@@ -94,53 +94,9 @@ st.markdown("Escolha um número disponível e preencha seus dados para participa
 st.markdown("🔢 Começamos com 100 números, mas você pode carregar mais se quiser!")
 
 reservados = numeros_reservados()
-# ======== BOTÕES RESPONSIVOS COM HTML & CSS ========
-st.markdown("""
-    <style>
-        .grid-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-        }
-        .grid-item {
-            background-color: #262730;
-            color: white;
-            border: none;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 16px;
-            min-width: 48px;
-            text-align: center;
-            cursor: pointer;
-        }
-        .grid-item:disabled {
-            background-color: #555;
-            cursor: not-allowed;
-            opacity: 0.4;
-        }
-    </style>
-""", unsafe_allow_html=True)
 
-html_botoes = "<div class='grid-container'>"
-
-for i in range(1, st.session_state["limite_numeros"] + 1):
-    if i in reservados:
-        html_botoes += f"<button class='grid-item' disabled>{i}</button>"
-    else:
-        html_botoes += f"""
-        <form action="" method="post" style="display:inline;">
-            <input type="hidden" name="numero" value="{i}"/>
-            <button name="botao_{i}" class="grid-item" type="submit">{i}</button>
-        </form>
-        """
-
-html_botoes += "</div>"
-st.markdown(html_botoes, unsafe_allow_html=True)
-
-dispositivo = streamlit_js_eval(js_expressions="window.innerWidth", key="WIDTH")
-num_colunas = 10 if dispositivo and dispositivo > 768 else 3  # Responsivo
-
+# Ajusta número de colunas com base na largura da tela (móvel ou desktop)
+num_colunas = 20 
 colunas = st.columns(num_colunas)
 
 for i in range(1, st.session_state["limite_numeros"] + 1):
@@ -150,6 +106,7 @@ for i in range(1, st.session_state["limite_numeros"] + 1):
     else:
         if col.button(f"{i}", key=f"botao_{i}"):
             st.session_state["numero_selecionado"] = i
+
 
 if "mostrar_mais" not in st.session_state:
     st.session_state["mostrar_mais"] = False
