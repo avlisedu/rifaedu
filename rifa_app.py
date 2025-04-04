@@ -17,7 +17,7 @@ import os
 # ======== CONEXÃO COM BANCO POSTGRES (SUPABASE) ========
 def conectar():
     return psycopg2.connect(
-        host="https://xkwusqpqmtjfehabofiv.supabase.co",
+        host="db.xkwusqpqmtjfehabofiv.supabase.co",
         database="postgres",
         user="postgres",
         password=st.secrets["DB_PASSWORD"],
