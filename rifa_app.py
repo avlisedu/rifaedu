@@ -2,24 +2,14 @@ import streamlit as st
 import psycopg2
 from supabase import create_client
 import os
-
-# # Expande a largura da página
-# st.markdown("""
-#     <style>
-#         .main {
-#             max-width: 100%;
-#             padding-left: 3rem;
-#             padding-right: 3rem;
-#         }
-#     </style>
-# """, unsafe_allow_html=True)
+from PIL import Image
 
 # ======== CONEXÃO COM BANCO POSTGRES (SUPABASE) ========
 def conectar():
     return psycopg2.connect(
-        host="db.xkwusqpqmtjfehabofiv.supabase.co",
-        database="postgres",
-        user="postgres",
+        host=st.secrets["DB_HOST"],
+        database=st.secrets["DB_NAME"],
+        user=st.secrets["DB_USER"],
         password=st.secrets["DB_PASSWORD"],
         port="5432"
     )
@@ -70,17 +60,12 @@ if "limite_numeros" not in st.session_state:
 
 st.title("🎟️ Rifa Solidária - Prêmio R$200")
 
-
-
-# ======== CABEÇALHO COM FOTO E MOTIVO ========
-from PIL import Image
-
 # ======== CABEÇALHO COM FOTO, TEXTO E QR CODE ========
 st.markdown("---")
 col1, col2, col3 = st.columns([1, 3, 1])
 
 with col1:
-    foto = Image.open("minha_foto.jpg")  # substitua pelo nome real da sua imagem
+    foto = Image.open("minha_foto.jpg")
     st.image(foto, width=140, caption="Eduardo")
 
 with col2:
@@ -89,18 +74,15 @@ with col2:
         Olá! Meu nome é <b>Eduardo</b>, sou doutorando em Engenharia de Produção na UFPE.<br>
         Estou organizando essa rifa porque estou <b>sem bolsa de estudo</b> no momento.<br>
         O valor arrecadado vai me ajudar com despesas acadêmicas e de subsistência.<br><br>
-        🎁 O prêmio é <b>R$200</b> e cada número custa <b>R$10</b>.<br>
-        🙏 Participe e me ajude a continuar meus estudos!\n
+        🏱 O prêmio é <b>R$200</b> e cada número custa <b>R$10</b>.<br>
+        😚 Participe e me ajude a continuar meus estudos!<br>
         💸 Chave Pix: eduardo.es@ufpe.br
         </div>
     """, unsafe_allow_html=True)
 
 with col3:
-    qr = Image.open("qrbanco.png")  # nome da imagem do QR Code Pix
+    qr = Image.open("qrbanco.png")
     st.image(qr, width=140, caption="Chave Pix")
-
-
-######################
 
 st.markdown("Escolha um número disponível e preencha seus dados para participar.")
 st.markdown("🔢 Começamos com 100 números, mas você pode carregar mais se quiser!")
@@ -123,7 +105,6 @@ if st.button("🔁 Ver mais números"):
     st.session_state["limite_numeros"] += 50
     st.session_state["mostrar_mais"] = True
     st.rerun()
-
 
 # ======== FORMULÁRIO DE RESERVA ========
 if "numero_selecionado" in st.session_state:
@@ -175,7 +156,7 @@ if not st.session_state["admin_autenticado"]:
 
     if st.session_state.get("mostrar_senha"):
         senha = st.text_input("Digite a senha", type="password")
-        if senha == st.secrets["ADMIN_PASSWORD"]:  # troque pela sua senha real
+        if senha == st.secrets["ADMIN_PASSWORD"]:
             st.success("Login realizado com sucesso! ✅")
             st.session_state["admin_autenticado"] = True
             st.rerun()
