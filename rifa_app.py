@@ -88,15 +88,19 @@ st.markdown("Escolha um número disponível e preencha seus dados para participa
 st.markdown("🔢 Começamos com 100 números, mas você pode carregar mais se quiser!")
 
 reservados = numeros_reservados()
-colunas = st.columns(10)
+
+# Ajusta número de colunas com base na largura da tela (móvel ou desktop)
+num_colunas = 5 if st.runtime.scriptrunner.script_run_context.is_running_with_streamlit else 10
+colunas = st.columns(num_colunas)
 
 for i in range(1, st.session_state["limite_numeros"] + 1):
-    col = colunas[(i - 1) % 10]
+    col = colunas[(i - 1) % num_colunas]
     if i in reservados:
         col.button(f"{i}", disabled=True)
     else:
         if col.button(f"{i}", key=f"botao_{i}"):
             st.session_state["numero_selecionado"] = i
+
 
 if "mostrar_mais" not in st.session_state:
     st.session_state["mostrar_mais"] = False
